@@ -45,7 +45,8 @@ import java.util.concurrent.Executor;
  * Github: https://github.com/HenryFabio
  */
 @Getter
-public class BungeeFrame implements CommandFrame<Plugin, CommandSender, BungeeCommand> {
+public final class BungeeFrame implements CommandFrame<Plugin, CommandSender, BungeeCommand> {
+
     private final Plugin plugin;
     private final AdapterMap adapterMap;
     private final MessageHolder messageHolder;
@@ -82,15 +83,13 @@ public class BungeeFrame implements CommandFrame<Plugin, CommandSender, BungeeCo
 
     @Override
     public BungeeCommand getCommand(String name) {
-        int index = name.indexOf('.');
-        String recursiveCommand = (index != -1 ? name.substring(0, index) : name).toLowerCase();
+        final int index = name.indexOf('.');
+        final String recursiveCommand = (index != -1 ? name.substring(0, index) : name).toLowerCase();
 
-        BungeeCommand command = commandMap.get(recursiveCommand);
-        if (command == null) {
-            command = new BungeeCommand(this, recursiveCommand, 0);
-            commandMap.put(recursiveCommand, command);
-        }
+        final BungeeCommand bungeeCommand = commandMap.get(recursiveCommand);
+        final BungeeCommand command = bungeeCommand == null ? new BungeeCommand(this, recursiveCommand, 0) : bungeeCommand;
 
+        commandMap.put(recursiveCommand, command);
         return index != -1 ? command.createRecursive(name) : command;
     }
 
@@ -98,13 +97,13 @@ public class BungeeFrame implements CommandFrame<Plugin, CommandSender, BungeeCo
     public void registerCommands(Object... objects) {
         for (Object object : objects) {
             for (Method method : object.getClass().getDeclaredMethods()) {
-                Command command = method.getAnnotation(Command.class);
+                final Command command = method.getAnnotation(Command.class);
                 if (command != null) {
                     registerCommand(new CommandInfo(command), new BungeeCommandExecutor(this, method, object));
                     continue;
                 }
 
-                Completer completer = method.getAnnotation(Completer.class);
+                final Completer completer = method.getAnnotation(Completer.class);
                 if (completer != null) {
                     registerCompleter(completer.name(), new BungeeCompleterExecutor(method, object));
                 }
@@ -114,7 +113,7 @@ public class BungeeFrame implements CommandFrame<Plugin, CommandSender, BungeeCo
 
     @Override
     public void registerCommand(CommandInfo commandInfo, CommandExecutor<CommandSender> commandExecutor) {
-        BungeeCommand recursive = getCommand(commandInfo.getName());
+        final BungeeCommand recursive = getCommand(commandInfo.getName());
         if (recursive == null) {
             return;
         }
@@ -122,17 +121,14 @@ public class BungeeFrame implements CommandFrame<Plugin, CommandSender, BungeeCo
         recursive.initCommand(commandInfo, commandExecutor);
 
         if (recursive.getPosition() == 0) {
-            ProxyServer.getInstance().getPluginManager().registerCommand(
-              plugin,
-              recursive
-            );
+            ProxyServer.getInstance().getPluginManager().registerCommand(plugin, recursive);
         }
     }
 
     @Override
     public void registerCompleter(String name, CompleterExecutor<CommandSender> completerExecutor) {
-        BungeeCommand recursive = getCommand(name);
-        if(recursive == null) {
+        final BungeeCommand recursive = getCommand(name);
+        if (recursive == null) {
             return;
         }
 
@@ -142,9 +138,12 @@ public class BungeeFrame implements CommandFrame<Plugin, CommandSender, BungeeCo
     @Override
     public boolean unregisterCommand(String name) {
         final BungeeCommand command = commandMap.remove(name);
-        if (command == null) return false;
+        if (command == null) {
+          return false;
+        }
 
         ProxyServer.getInstance().getPluginManager().unregisterCommand(command);
         return true;
     }
+
 }

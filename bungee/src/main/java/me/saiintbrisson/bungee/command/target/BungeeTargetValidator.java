@@ -25,8 +25,13 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
  * @author Henry Fábio
  * Github: https://github.com/HenryFabio
  */
-public class BungeeTargetValidator implements TargetValidator {
-    public static final BungeeTargetValidator INSTANCE = new BungeeTargetValidator();
+public final class BungeeTargetValidator implements TargetValidator {
+
+    public static final BungeeTargetValidator INSTANCE;
+
+    static {
+      INSTANCE = new BungeeTargetValidator();
+    }
 
     @Override
     public boolean validate(CommandTarget target, Object object) {
@@ -53,4 +58,5 @@ public class BungeeTargetValidator implements TargetValidator {
 
         return CommandTarget.ALL;
     }
+
 }

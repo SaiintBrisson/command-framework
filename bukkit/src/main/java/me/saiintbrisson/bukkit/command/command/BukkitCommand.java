@@ -27,6 +27,7 @@ import me.saiintbrisson.minecraft.command.executor.CommandExecutor;
 import me.saiintbrisson.minecraft.command.executor.CompleterExecutor;
 import me.saiintbrisson.minecraft.command.message.MessageHolder;
 import me.saiintbrisson.minecraft.command.message.MessageType;
+import me.saiintbrisson.minecraft.command.util.StringUtil;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
@@ -131,11 +132,10 @@ public class BukkitCommand extends Command implements CommandHolder<CommandSende
      */
     @Override @Nullable
     public BukkitChildCommand getChildCommand(String name) {
-        for (BukkitChildCommand childCommand : childCommandList) {
-            if (childCommand.equals(name)) return childCommand;
-        }
-
-        return null;
+      return childCommandList.stream()
+          .filter(command -> command.equals(name))
+          .findFirst()
+          .orElse(null);
     }
 
     @Override
@@ -159,23 +159,17 @@ public class BukkitCommand extends Command implements CommandHolder<CommandSende
         }
 
         if (!testPermissionSilent(sender)) {
-            sender.sendMessage(
-              messageHolder.getReplacing(MessageType.NO_PERMISSION, getPermission())
-            );
+            sender.sendMessage(messageHolder.getReplacing(MessageType.NO_PERMISSION, getPermission()));
             return false;
         }
 
         if (commandInfo != null && !BukkitTargetValidator.INSTANCE.validate(commandInfo.getTarget(), sender)) {
-            sender.sendMessage(frame.getMessageHolder().getReplacing(
-              MessageType.INCORRECT_TARGET,
-              commandInfo.getTarget().name()
-            ));
+            sender.sendMessage(frame.getMessageHolder().getReplacing(MessageType.INCORRECT_TARGET, commandInfo.getTarget().name()));
             return false;
         }
 
         if (args.length > 0) {
-            BukkitChildCommand command = getChildCommand(args[0]);
-
+            final BukkitChildCommand command = getChildCommand(args[0]);
             if (command != null) {
                 final String label = commandLabel + " " + args[0];
                 return command.execute(sender, label, Arrays.copyOfRange(args, 1, args.length));
@@ -186,15 +180,7 @@ public class BukkitCommand extends Command implements CommandHolder<CommandSende
             return false;
         }
 
-        final BukkitContext context = new BukkitContext(
-          commandLabel,
-          sender,
-          BukkitTargetValidator.INSTANCE.fromSender(sender),
-          args,
-          frame,
-          this
-        );
-
+        final BukkitContext context = new BukkitContext(commandLabel, sender, BukkitTargetValidator.INSTANCE.fromSender(sender), args, frame, this);
         if (commandInfo.isAsync() && frame.getExecutor() != null) {
             frame.getExecutor().execute(() -> commandExecutor.execute(context));
             return false;
@@ -211,25 +197,15 @@ public class BukkitCommand extends Command implements CommandHolder<CommandSende
         }
 
         if (completerExecutor != null) {
-            return completerExecutor.execute(new BukkitContext(
-              alias,
-              sender,
-              BukkitTargetValidator.INSTANCE.fromSender(sender),
-              args,
-              frame,
-              this
-            ));
+            return completerExecutor.execute(new BukkitContext(alias, sender, BukkitTargetValidator.INSTANCE.fromSender(sender), args, frame, this));
         }
 
         if (childCommandList.size() != 0 && args.length != 0) {
             List<String> matchedChildCommands = new ArrayList<>();
 
-            for (BukkitChildCommand command : childCommandList) {
-                if (StringUtils.startsWithIgnoreCase(command.getName(), args[args.length - 1])
-                  && command.testPermissionSilent(sender)) {
-                    matchedChildCommands.add(command.getName());
-                }
-            }
+            childCommandList.stream()
+                .filter(command -> StringUtil.startsWithIgnoreCase(command.getName(), args[args.length - 1]) && command.testPermissionSilent(sender))
+                .forEach(command -> matchedChildCommands.add(command.getName()));
 
             if (matchedChildCommands.size() != 0) {
                 matchedChildCommands.sort(String.CASE_INSENSITIVE_ORDER);
@@ -241,26 +217,23 @@ public class BukkitCommand extends Command implements CommandHolder<CommandSende
     }
 
     public BukkitCommand createRecursive(String name) {
-        int position = getPosition() + StringUtils.countMatches(name, ".");
+        final int position = getPosition() + StringUtils.countMatches(name, ".");
         if (position == getPosition()) {
             return this;
         }
 
-        String subName = name.substring(Math.max(name.indexOf('.') + 1, 0));
+        final String subName = name.substring(Math.max(name.indexOf('.') + 1, 0));
 
-        int index = subName.indexOf('.');
+        final int index = subName.indexOf('.');
         String nextSubCommand = subName;
         if (index != -1) {
             nextSubCommand = subName.substring(0, index);
         }
 
-        BukkitChildCommand childCommand = getChildCommand(nextSubCommand);
+        final BukkitChildCommand command = getChildCommand(nextSubCommand);
+        final BukkitChildCommand childCommand = command == null ? new BukkitChildCommand(frame, nextSubCommand, this) : command;
 
-        if (childCommand == null) {
-            childCommand = new BukkitChildCommand(frame, nextSubCommand, this);
-            getChildCommandList().add(childCommand);
-        }
-
+        getChildCommandList().add(childCommand);
         return childCommand.createRecursive(subName);
     }
 
@@ -268,4 +241,5 @@ public class BukkitCommand extends Command implements CommandHolder<CommandSende
     public List<String> getAliasesList() {
         return getAliases();
     }
+
 }

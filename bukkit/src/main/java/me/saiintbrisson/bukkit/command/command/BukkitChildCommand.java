@@ -30,7 +30,7 @@ import java.util.Optional;
  *
  * @author SaiintBrisson (https://github.com/SaiintBrisson)
  */
-public class BukkitChildCommand extends BukkitCommand {
+public final class BukkitChildCommand extends BukkitCommand {
 
     private final BukkitCommand parentCommand;
 

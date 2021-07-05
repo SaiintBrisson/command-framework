@@ -33,16 +33,20 @@ import java.util.ResourceBundle;
 @Getter
 public final class MessageHolder {
 
-    private final EnumMap<MessageType, String> messageMap = new EnumMap<>(MessageType.class);
+    private final EnumMap<MessageType, String> registry;
+
+    {
+      registry = new EnumMap<>(MessageType.class);
+    }
 
     public MessageHolder() {
         for (MessageType value : MessageType.values()) {
-            messageMap.put(value, value.getDefMessage());
+            registry.put(value, value.getDefMessage());
         }
     }
 
     public String getMessage(MessageType type) {
-        return messageMap.get(type);
+        return registry.get(type);
     }
 
     public String getReplacing(MessageType type, String message) {
@@ -50,7 +54,7 @@ public final class MessageHolder {
     }
 
     public void setMessage(MessageType type, String message) {
-        messageMap.put(type, message);
+        registry.put(type, message);
     }
 
     public void loadFromResources(String baseName, Locale locale) {
@@ -64,12 +68,11 @@ public final class MessageHolder {
     }
 
     public void loadFromResources(ResourceBundle bundle) {
-        for (String s : bundle.keySet()) {
+        for (String str : bundle.keySet()) {
             try {
-                final MessageType type = MessageType.valueOf(s);
-                setMessage(type, bundle.getString(s).replace("&", "§"));
-            } catch (IllegalArgumentException ignore) {
-            }
+                final MessageType type = MessageType.valueOf(str);
+                setMessage(type, bundle.getString(str).replace("&", "§"));
+            } catch (IllegalArgumentException ignored) {}
         }
     }
 

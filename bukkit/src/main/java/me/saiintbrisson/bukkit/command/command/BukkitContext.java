@@ -25,6 +25,7 @@ import me.saiintbrisson.minecraft.command.command.Context;
 import me.saiintbrisson.minecraft.command.exception.CommandException;
 import me.saiintbrisson.minecraft.command.message.MessageType;
 import me.saiintbrisson.minecraft.command.target.CommandTarget;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 
 /**
@@ -32,7 +33,7 @@ import org.bukkit.command.CommandSender;
  */
 @Getter
 @AllArgsConstructor
-public class BukkitContext implements Context<CommandSender> {
+public final class BukkitContext implements Context<CommandSender> {
 
     private final String label;
     private final CommandSender sender;

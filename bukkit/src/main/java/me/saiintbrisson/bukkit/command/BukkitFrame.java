@@ -42,7 +42,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,7 +89,7 @@ public final class BukkitFrame implements CommandFrame<Plugin, CommandSender, Bu
             final Method mapMethod = server.getClass().getMethod("getCommandMap");
 
             this.bukkitCommandMap = (CommandMap) mapMethod.invoke(server);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException exception) {
+        } catch (ReflectiveOperationException exception) {
             throw new CommandException(exception);
         }
     }
@@ -129,18 +128,13 @@ public final class BukkitFrame implements CommandFrame<Plugin, CommandSender, Bu
      */
     @Override
     public BukkitCommand getCommand(String name) {
-        int index = name.indexOf('.');
-        String nextSubCommand = name;
-        if (index != -1) {
-            nextSubCommand = name.substring(0, index);
-        }
+        final int index = name.indexOf('.');
+        final String nextSubCommand = index != -1 ? name.substring(0, index) : name;
 
-        BukkitCommand subCommand = commandMap.get(nextSubCommand);
-        if (subCommand == null) {
-            subCommand = new BukkitCommand(this, nextSubCommand, 0);
-            commandMap.put(nextSubCommand, subCommand);
-        }
+        final BukkitCommand command = commandMap.get(nextSubCommand);
+        final BukkitCommand subCommand = command == null ? new BukkitCommand(this, nextSubCommand, 0) : command;
 
+        commandMap.put(nextSubCommand, subCommand);
         return subCommand.createRecursive(name);
     }
 
@@ -158,7 +152,7 @@ public final class BukkitFrame implements CommandFrame<Plugin, CommandSender, Bu
                     continue;
                 }
 
-                Completer completer = method.getAnnotation(Completer.class);
+                final Completer completer = method.getAnnotation(Completer.class);
                 if (completer != null) {
                     registerCompleter(completer.name(), new BukkitCompleterExecutor(method, object));
                 }

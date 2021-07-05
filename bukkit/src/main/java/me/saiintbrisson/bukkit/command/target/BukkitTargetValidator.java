@@ -29,7 +29,11 @@ import org.bukkit.entity.Player;
  */
 public final class BukkitTargetValidator implements TargetValidator {
 
-    public static final BukkitTargetValidator INSTANCE = new BukkitTargetValidator();
+    public static final BukkitTargetValidator INSTANCE;
+
+    static {
+      INSTANCE = new BukkitTargetValidator();
+    }
 
     /**
      * Tries to validate the Command target and Sender object.

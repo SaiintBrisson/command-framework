@@ -38,7 +38,7 @@ import java.lang.reflect.Method;
  *
  * @author SaiintBrisson (https://github.com/SaiintBrisson)
  */
-public class BukkitCommandExecutor implements CommandExecutor<CommandSender> {
+public final class BukkitCommandExecutor implements CommandExecutor<CommandSender> {
 
     private final Method method;
     private final Object holder;
@@ -141,8 +141,8 @@ public class BukkitCommandExecutor implements CommandExecutor<CommandSender> {
             if (targetException.getMessage() != null) {
                 context.sendMessage(messageHolder.getReplacing(MessageType.ERROR, targetException.getMessage()));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
             context.sendMessage("§cAn internal error occurred, please contact the staff team.");
         }
 

@@ -1,10 +1,9 @@
 allprojects {
     afterEvaluate {
         apply plugin: 'java'
-        apply plugin: 'maven'
 
         group 'me.saiintbrisson'
-        version '1.2-SNAPSHOT'
+        version '1.2.0-SNAPSHOT'
 
         sourceCompatibility = 1.8
 
@@ -13,9 +12,12 @@ allprojects {
         }
 
         dependencies {
-            implementation 'org.jetbrains:annotations:21.0.1'
+            def lombok = "org.projectlombok:lombok:1.18.20"
+            def annotations = "org.jetbrains:annotations:21.0.1"
 
-            def lombok = 'org.projectlombok:lombok:1.18.20'
+            compileOnly annotations
+            annotationProcessor annotations
+
             compileOnly lombok
             annotationProcessor lombok
         }

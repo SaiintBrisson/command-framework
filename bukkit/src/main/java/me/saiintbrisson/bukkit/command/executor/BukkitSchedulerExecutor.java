@@ -16,28 +16,26 @@
 
 package me.saiintbrisson.bukkit.command.executor;
 
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author SaiintBrisson (https://github.com/SaiintBrisson)
  */
-public class BukkitSchedulerExecutor implements Executor {
+public final class BukkitSchedulerExecutor implements Executor {
 
-    private final Plugin plugin;
-    private final BukkitScheduler scheduler;
+    private static final ExecutorService EXECUTOR;
 
-    public BukkitSchedulerExecutor(Plugin plugin) {
-        this.plugin = plugin;
-        this.scheduler = plugin.getServer().getScheduler();
+    static {
+      EXECUTOR = Executors.newCachedThreadPool();
     }
 
     @Override
     public void execute(@NotNull Runnable command) {
-        scheduler.runTaskAsynchronously(plugin, command);
+        EXECUTOR.execute(command);
     }
 
 }

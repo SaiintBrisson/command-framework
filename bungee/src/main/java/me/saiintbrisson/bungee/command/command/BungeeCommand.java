@@ -16,7 +16,6 @@
 
 package me.saiintbrisson.bungee.command.command;
 
-import com.google.common.collect.Lists;
 import lombok.Getter;
 import lombok.Setter;
 import me.saiintbrisson.bungee.command.BungeeFrame;
@@ -44,6 +43,7 @@ import java.util.*;
  */
 @Getter
 public class BungeeCommand extends Command implements CommandHolder<CommandSender, BungeeChildCommand>, TabExecutor {
+
     private final BungeeFrame frame;
     private final MessageHolder messageHolder;
 
@@ -54,18 +54,24 @@ public class BungeeCommand extends Command implements CommandHolder<CommandSende
     private CommandExecutor<CommandSender> commandExecutor;
     private CompleterExecutor<CommandSender> completerExecutor;
 
-    private final List<BungeeChildCommand> childCommandList = new LinkedList<>();
-
     private String permission;
     private String[] aliases;
 
     @Setter
     private String usage;
 
-    private final String description = "Not provided";
+    private final String description;
+
+    private final List<BungeeChildCommand> childCommandList;
+
+    {
+      childCommandList = new LinkedList<>();
+      description = "Not provided";
+    }
 
     public BungeeCommand(BungeeFrame frame, String name, int position) {
         super(name);
+
         this.frame = frame;
         this.position = position;
         this.messageHolder = frame.getMessageHolder();
@@ -96,7 +102,6 @@ public class BungeeCommand extends Command implements CommandHolder<CommandSende
         if (commandExecutor instanceof BungeeCommandExecutor) {
             ((BungeeCommandExecutor) commandExecutor).setCommand(this);
         }
-
     }
 
     public final void initCompleter(CompleterExecutor<CommandSender> completerExecutor) {
@@ -136,13 +141,7 @@ public class BungeeCommand extends Command implements CommandHolder<CommandSende
             return;
         }
 
-        commandExecutor.execute(new BungeeContext(
-          sender,
-          BungeeTargetValidator.INSTANCE.fromSender(sender),
-          args,
-          frame,
-          this
-        ));
+        commandExecutor.execute(new BungeeContext(sender, BungeeTargetValidator.INSTANCE.fromSender(sender), args, frame, this));
     }
 
     @Override
@@ -152,24 +151,15 @@ public class BungeeCommand extends Command implements CommandHolder<CommandSende
         }
 
         if (completerExecutor != null) {
-            return completerExecutor.execute(new BungeeContext(
-              sender,
-              BungeeTargetValidator.INSTANCE.fromSender(sender),
-              args,
-              frame,
-              this
-            ));
+            return completerExecutor.execute(new BungeeContext(sender, BungeeTargetValidator.INSTANCE.fromSender(sender), args, frame, this));
         }
 
         if (childCommandList.size() != 0 && args.length != 0) {
-            List<String> matchedChildCommands = new ArrayList<>();
+            final List<String> matchedChildCommands = new ArrayList<>();
 
-            for (BungeeChildCommand command : childCommandList) {
-                if (StringUtil.startsWithIgnoreCase(command.getName(), args[args.length - 1])
-                  && command.testPermissionSilent(sender)) {
-                    matchedChildCommands.add(command.getName());
-                }
-            }
+            childCommandList.stream()
+                .filter(command -> StringUtil.startsWithIgnoreCase(command.getName(), args[args.length - 1]) && command.testPermissionSilent(sender))
+                .forEach(command -> matchedChildCommands.add(command.getName()));
 
             if (matchedChildCommands.size() != 0) {
                 matchedChildCommands.sort(String.CASE_INSENSITIVE_ORDER);
@@ -177,16 +167,15 @@ public class BungeeCommand extends Command implements CommandHolder<CommandSende
             }
         }
 
-        return Lists.newArrayList();
+        return new ArrayList<>();
     }
 
     @Override
-    public BungeeChildCommand getChildCommand(String name) {
-        for (BungeeChildCommand childCommand : childCommandList) {
-            if (childCommand.equals(name)) return childCommand;
-        }
-
-        return null;
+    public BungeeChildCommand getChildCommand(final String name) {
+      return childCommandList.stream()
+          .filter(command -> command.equals(name))
+          .findFirst()
+          .orElse(null);
     }
 
     public BungeeCommand createRecursive(String name) {
@@ -195,17 +184,15 @@ public class BungeeCommand extends Command implements CommandHolder<CommandSende
             return this;
         }
 
-        String recursive = name.substring(name.indexOf('.') + 1);
+        final String recursive = name.substring(name.indexOf('.') + 1);
 
-        int index = recursive.indexOf('.');
-        String childCommandName = index != -1 ? recursive.substring(0, index) : recursive;
+        final int index = recursive.indexOf('.');
+       final String childCommandName = index != -1 ? recursive.substring(0, index) : recursive;
 
-        BungeeChildCommand childCommand = getChildCommand(childCommandName);
-        if (childCommand == null) {
-            childCommand = new BungeeChildCommand(frame, childCommandName, this);
-            getChildCommandList().add(childCommand);
-        }
+        final BungeeChildCommand command = getChildCommand(childCommandName);
+        final BungeeChildCommand childCommand = command == null ? new BungeeChildCommand(frame, childCommandName, this) : command;
 
+        getChildCommandList().add(childCommand);
         return childCommand.createRecursive(recursive);
     }
 
@@ -220,17 +207,18 @@ public class BungeeCommand extends Command implements CommandHolder<CommandSende
     }
 
     protected boolean testPermissionSilent(@NotNull CommandSender target) {
-        String permission = getPermission();
-        if ((permission == null) || (permission.length() == 0)) {
+      final String permission = getPermission();
+        if (permission == null || permission.length() == 0) {
             return true;
         }
 
-        for (String p : permission.split(";")) {
-            if (target.hasPermission(p)) {
+        for (String player : permission.split(";")) {
+            if (target.hasPermission(player)) {
                 return true;
             }
         }
 
         return false;
     }
+
 }

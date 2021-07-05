@@ -25,7 +25,8 @@ import java.util.Optional;
  * @author Henry Fábio
  * Github: https://github.com/HenryFabio
  */
-public class BungeeChildCommand extends BungeeCommand {
+public final class BungeeChildCommand extends BungeeCommand {
+
     private final BungeeCommand parentCommand;
 
     public BungeeChildCommand(BungeeFrame frame, String name, BungeeCommand parentCommand) {
@@ -41,4 +42,5 @@ public class BungeeChildCommand extends BungeeCommand {
     public Optional<CommandHolder<?, ?>> getParentCommand() {
         return Optional.of(parentCommand);
     }
+
 }

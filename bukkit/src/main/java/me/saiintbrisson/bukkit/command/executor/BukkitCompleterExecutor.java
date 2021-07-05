@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author SaiintBrisson (https://github.com/SaiintBrisson)
  */
-public class BukkitCompleterExecutor implements CompleterExecutor<CommandSender> {
+public final class BukkitCompleterExecutor implements CompleterExecutor<CommandSender> {
 
     private final Method method;
     private final Object holder;
@@ -61,7 +61,7 @@ public class BukkitCompleterExecutor implements CompleterExecutor<CommandSender>
             }
 
             return null;
-        } catch (Exception exception) {
+        } catch (Exception ignored) {
             return null;
         }
     }

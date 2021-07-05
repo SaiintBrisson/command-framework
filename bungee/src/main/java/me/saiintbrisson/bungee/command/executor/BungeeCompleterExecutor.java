@@ -28,7 +28,8 @@ import java.util.List;
  * @author Henry Fábio
  * Github: https://github.com/HenryFabio
  */
-public class BungeeCompleterExecutor implements CompleterExecutor<CommandSender> {
+public final class BungeeCompleterExecutor implements CompleterExecutor<CommandSender> {
+
     private final Method method;
     private final Object holder;
 
@@ -48,20 +49,23 @@ public class BungeeCompleterExecutor implements CompleterExecutor<CommandSender>
         this.holder = holder;
     }
 
-    @Override
+    @Override @SuppressWarnings("unchecked")
     public List<String> execute(Context<CommandSender> context) {
-        Class<?>[] types = method.getParameterTypes();
-
         try {
+            final Class<?>[] types = method.getParameterTypes();
+
             if (types.length == 0) {
                 return (List<String>) method.invoke(holder);
-            } else if (types.length == 1 && types[0] == Context.class) {
-                return (List<String>) method.invoke(holder, context);
-            } else {
-                return null;
             }
-        } catch (Exception e) {
+
+            if (types.length == 1 && types[0] == Context.class) {
+                return (List<String>) method.invoke(holder, context);
+            }
+
+            return null;
+        } catch (Exception exception) {
             return null;
         }
     }
+
 }
